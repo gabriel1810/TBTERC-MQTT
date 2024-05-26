@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avisos</title>
+</head>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="styles.css">
+
+<body>
+    <div id="app">
+      <div id="alertas">
+
+      </div>
+        <div id="salasDeAula" class="mt-4">
+            <div class="card_centralizado card" id="card1" @click="mudaSalaSelecionada(1)"  style="width: 70%;">
+              <div class="centralizado card-body" @click="mudaSalaSelecionada(1)">
+                  <h5 class="card-title">Sala 1 (D1MINI_PRO)</h5>
+                  <p class="card-text" id="horarioUltimoAlertaSala1"></p>
+              </div>  
+            </div>
+
+            <div class="card_centralizado card " id="card2" @click="mudaSalaSelecionada(2)" style="width: 70%;">
+              <div class="centralizado card-body">
+                <h5 class="card-title">Sala 2 (NODEMCU)</h5>
+                <p class="card-text"  id="horarioUltimoAlertaSala2"></p>
+              </div>
+            </div>
+
+            <div class="card_centralizado card" id="card3" @click="mudaSalaSelecionada(3)" style="width: 70%;">
+              <div class="centralizado card-body">
+                <h5 class="card-title">Sala 3 (D1_MINI)</h5>
+                <p class="card-text"  id="horarioUltimoAlertaSala3"></p>
+              </div>
+            </div>
+        </div>
+
+        <div id="alertasDaSala">
+            <div>
+                <h3>Informações da Sala {{salaSelecionada}}</h3>
+            </div>
+
+            <div class="accordion" id="accordionAlertas">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                   <strong> Histórico de alertas</strong>
+                  </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionAlertas">
+                  <div class="accordion-body caixaAvisos">
+                    <div class="mb-3 ms-auto" style="width: 150px;">
+                      <label for="selectNum" class="form-label">Número de itens</label>
+                      <select class="form-select form-select-sm" @change="handleSelectChange" id="selectNum">
+                        <option selected value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                      </select>
+                    </div>
+                    <ul id="listaDeAlertas"  class="list-group" style="width: 95%;">
+                      <li v-for="reg in listaAvisos" :class="getClass(reg.idTipoAlerta)" class="list-group-item">{{reg.data}} | {{ getMessage(reg.idTipoAlerta) }}</li>
+                    </ul>
+                    </div>
+                </div>
+              </div>
+
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                    <strong> Gráficos</strong> 
+                  </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionAlertas">
+                  <div class="accordion-body">
+
+                    <div>
+                      <canvas id="chartDistancia"></canvas>
+                    </div>
+
+                    <div>
+                      <canvas id="chartLuz"></canvas>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                    <strong>Configurações</strong>
+                  </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionAlertas">
+                  <div class="accordion-body">
+                    <div class="input-group mb-3">
+                      <span class="input-group-text">Valor base da distância (cm)</span>
+                      <input type="number" class="form-control" id="vlBaseDist" min="0" step="1">
+                    </div>
+
+                    <div class="input-group mb-3">
+                      <span class="input-group-text">Valor base da luminosidade</span>
+                      <input type="number" class="form-control" id="vlBaseLum" min="0" step="1">
+                    </div>
+                    <div style="width: fit-content;margin-left: auto;margin-right: auto;">
+                      <button class="btn btn-success" @click="mudarParametrosEsp">Aplicar alterações</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+        </div>
+
+
+    </div>
+    <script src="index.js"></script>
+
+    <script>
+        const socket = new WebSocket(`ws://${window.location.host}`);
+        let notificacaoAparecendo = false;
+
+        socket.onopen = function() {
+           // console.log('WebSocket connection opened');
+        };
+
+        socket.onerror = function(error) {
+            console.error('WebSocket error: ', error);
+        };
+
+        socket.onmessage = function(event) {
+            const notification = JSON.parse(event.data);
+            if(!notificacaoAparecendo)
+              displayNotification(notification);
+        };
+
+        socket.onclose = function() {
+           // console.log('WebSocket connection closed');
+        };
+
+        function displayNotification(notification) {
+            let tipoNot = notification.type;
+            if(tipoNot == "alerta"){
+                let sensor = notification.sensor;
+                let sala = "2";
+                if(sensor == "D1_MINI"){
+                  sala = "3"
+                }
+                else if(sensor == "D1MINI_PRO"){
+                  sala = "1"
+                }
+
+                let tipoIdent = "";
+
+                if(notification.movimentoDetectado && notification.luzDetectada){
+                  tipoIdent = "Movimento e Luz";
+                }
+                else if(notification.movimentoDetectado){
+                  tipoIdent = "Movimento";
+                }
+                else{
+                  tipoIdent = "Luz";
+                }
+
+                let msg = `Detecção de ${tipoIdent} - Sala ${sala}`
+
+                let divAlerta = document.getElementById('alertas');
+                divAlerta.innerHTML = `
+                <div class="alert alert-danger alertaPop" wrole="alert">
+                  <div>
+                    ${msg}
+                  </div>
+                  <div>
+                    <button class="btn btn-sm btn-primary" id="btn-refresh">
+                      <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                  </div>
+                  <div>
+                    <button class="btn btn-sm btn-danger" id="btn-close">
+                      <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                  </div>
+              </div>
+                ` ;
+                notificacaoAparecendo = true;
+
+                document.getElementById('btn-close').addEventListener('click', function() {
+                    divAlerta.innerHTML = ''; // Remove a notificação
+                    notificacaoAparecendo = false; // Permite novas notificações
+                });
+
+                document.getElementById('btn-refresh').addEventListener('click', function() {
+                    app.mudaSalaSelecionada(sala); // Chama a função Vue
+                });
+            }
+        }
+
+
+
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+#salasDeAula{
+    display: flex;
+    flex-direction: column;
+    row-gap: 20px;
+    margin-top: 10px;
+}
+
+
+.alertaPop{
+    width: 100%;
+    position:fixed; 
+    top: 0; 
+    z-index: 1; 
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.centralizado{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-shadow: 1px 1px 5px rgb(48, 48, 48);
+}
+
+.fundo_grad_azul{
+    background-image: linear-gradient(rgb(42, 141, 255) ,rgb(0, 119, 255));
+}
+
+.fundo_grad_vermelho{
+    background-image: linear-gradient(rgb(255, 70, 70) ,rgb(226, 0, 0));
+}
+
+.fundo_grad_cinza{
+    background-image: linear-gradient(rgb(145, 145, 145) ,rgb(100, 100, 100));
+}
+
+.card_centralizado{
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#alertasDaSala{
+    margin-top: 30px;
+    width: 100%;
+    row-gap: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.card_centralizado:hover{
+    cursor: pointer;
+    transform: scale(105%);
+}
+
+.accordion{
+    width: 100%;
+}
+
+.caixaAvisos{
+    max-height: 50vh;
+    overflow-y: auto;
+}
