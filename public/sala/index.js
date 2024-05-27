@@ -19,9 +19,21 @@ const app = new Vue({
         await this.geraVetorGraficoLuz();
         this.renderChartMovimento();
         this.renderChartLuz();
+        await this.carregaUltimoValorDefinido();
     },
 
     methods:{
+        async carregaUltimoValorDefinido(){
+          let url = `/getUltimoValorPadrao?idSensor=${this.salaSelecionada}`;
+          let response = await axios.get(url);
+          let vlBaseDistAtual = document.getElementById('vlBaseDistAtual');
+          let vlBaseLumAtual = document.getElementById('vlBaseLumAtual');
+          if(response.data.vlBaseDistAtual)
+            vlBaseDistAtual.innerHTML = `<strong>Valor base/distância (cm) atual:</strong> ${response.data.vlBaseDistAtual}`
+          if(response.data.vlBaseLumAtual)
+          vlBaseLumAtual.innerHTML = `<strong>Valor base/luminosidade atual:</strong> ${response.data.vlBaseLumAtual}`
+        },
+
         async carregaUltimosAvisosSalas(){
             let ultimoAvisoSala1 = await this.getUltimoAlerta('D1MINI_PRO');
             let ultimoAvisoSala2 = await this.getUltimoAlerta('NODEMCU'); 
@@ -395,6 +407,15 @@ const app = new Vue({
 
             setTimeout(() => {
               divAlerta.innerHTML = '';
+              let vlBaseDistAtual = document.getElementById('vlBaseDistAtual');
+              let vlBaseLumAtual = document.getElementById('vlBaseLumAtual');
+              if(vlBaseDist){
+                vlBaseDistAtual.innerHTML = `<strong>Valor base/distância (cm) atual:</strong> ${vlBaseDist}`
+              }
+              if(vlBaseLum){
+                vlBaseLumAtual.innerHTML = `<strong>Valor base/luminosidade atual:</strong> ${vlBaseLum}`
+              }
+
             }, 700);
           }
 

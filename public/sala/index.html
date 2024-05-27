@@ -101,15 +101,25 @@
                 </h2>
                 <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionAlertas">
                   <div class="accordion-body">
-                    <div class="input-group mb-3">
-                      <span class="input-group-text">Valor base da distância (cm)</span>
-                      <input type="number" class="form-control" id="vlBaseDist" min="0" step="1">
+
+                    <div>
+                      <p id="vlBaseDistAtual"><strong>Valor base/distância (cm) atual:</strong></p>
+                      <div class="input-group mb-3">
+                        <span class="input-group-text">Novo valor base/distância (cm)</span>
+                        <input type="number" class="form-control" id="vlBaseDist" min="0" step="1">
+                      </div>
+
+                      <hr>
                     </div>
 
-                    <div class="input-group mb-3">
-                      <span class="input-group-text">Valor base da luminosidade</span>
-                      <input type="number" class="form-control" id="vlBaseLum" min="0" step="1">
+                    <div>
+                      <p id="vlBaseLumAtual"><strong>Valor base/luminosidade atual:</strong></p>
+                      <div class="input-group mb-5">
+                        <span class="input-group-text">Novo valor base/luminosidade</span>
+                        <input type="number" class="form-control" id="vlBaseLum" min="0" step="1">
+                      </div>
                     </div>
+
                     <div style="width: fit-content;margin-left: auto;margin-right: auto;">
                       <button class="btn btn-success" @click="mudarParametrosEsp">Aplicar alterações</button>
                     </div>
@@ -138,8 +148,10 @@
 
         socket.onmessage = function(event) {
             const notification = JSON.parse(event.data);
-            if(!notificacaoAparecendo)
-              displayNotification(notification);
+            if(notification.type == "alerta" && !notificacaoAparecendo)
+                displayNotification(notification);
+            else if(notification.type == "attVlAtual")
+                atualizaValorBaseAtual(notification);
         };
 
         socket.onclose = function() {
@@ -203,7 +215,15 @@
             }
         }
 
-
+        function atualizaValorBaseAtual(notification){
+          let vlBaseDistAtual = document.getElementById('vlBaseDistAtual');
+          let vlBaseLumAtual = document.getElementById('vlBaseLumAtual');
+          let salaSelecionada = window.location.pathname.substring(window.location.pathname.length-1);
+          if(salaSelecionada == notification.sensorNum){
+            vlBaseDistAtual.innerHTML = `<strong>Valor base/distância (cm) atual:</strong> ${notification.vlBaseDistAtual}`
+            vlBaseLumAtual.innerHTML = `<strong>Valor base/luminosidade atual:</strong> ${notification.vlBaseLumAtual}`
+          }
+        }
 
 
   </script>

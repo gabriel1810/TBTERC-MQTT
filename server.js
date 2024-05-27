@@ -10,7 +10,11 @@ const app = express()
 const NodePort = 3000;
 const db = require('./database.js');
 
-
+let ultimasLeiturasValores = [
+    {sensor:1,vlBaseLumAtual:null,vlBaseDistAtual:null},
+    {sensor:2,vlBaseLumAtual:null,vlBaseDistAtual:null},
+    {sensor:3,vlBaseLumAtual:null,vlBaseDistAtual:null}
+]
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
@@ -40,37 +44,44 @@ app.get('/getUltimoAlerta',async(req, res) => {
     res.send(alerta);
 });
 
+app.get('/getUltimoValorPadrao',async(req, res) => {
+    let idSensor = req.query.idSensor;
+    res.send(ultimasLeiturasValores[idSensor-1]);
+});
 
 app.put('/setarNovosParametros', async (req, res) => {
     let dispositivo = req.body.dispositivo;
     let vlBaseDist = req.body.vlBaseDist;
     let vlBaseLum = req.body.vlBaseLum;
-    let topico = "";
+    let sensorId = 0;
+    if(dispositivo == "D1MINI_PRO")
+        sensorId = 1
+    else if(dispositivo == "NODEMCU")
+        sensorId = 2;
+    else if(dispositivo == "D1_MINI")
+        sensorId = 3
 
-    switch(dispositivo){
-        case "D1MINI_PRO":
-            topico = "sensor1/config"
-            break;
-        case "NODEMCU":
-            topico = "sensor2/config"
-            break;  
-        case "D1_MINI":
-            topico = "sensor3/config"
-            break;  
-    }
+    let topico = `sensor${sensorId}/config`;
+
     let msg = "{"
     if(vlBaseLum && vlBaseDist){
         msg += `\"baseLightValueTurnedOn\":${vlBaseLum},\"baseDistance\":${vlBaseDist}`
+        ultimasLeiturasValores[sensorId-1] = {sensor:sensorId,vlBaseLumAtual:vlBaseLum,vlBaseDistAtual:vlBaseDist}
     }
     else if(vlBaseLum && !vlBaseDist){
         msg += `\"baseLightValueTurnedOn\":${vlBaseLum}`
+        ultimasLeiturasValores[sensorId-1] = {sensor:sensorId,vlBaseLumAtual:vlBaseLum,vlBaseDistAtual:ultimasLeiturasValores[sensorId-1].vlBaseDistAtual}
     }
     else if(!vlBaseLum && vlBaseDist){
         msg += `\"baseDistance\":${vlBaseDist}`
+        ultimasLeiturasValores[sensorId-1] = {sensor:sensorId,vlBaseLumAtual:ultimasLeiturasValores[sensorId-1].vlBaseLumAtual,vlBaseDistAtual:vlBaseDist}
     }
 
     msg += "}"
     publishMessage(topico,msg);
+    
+    
+
     res.sendStatus(200);  
 });
 
@@ -137,6 +148,18 @@ function connectToBroker(){
            
             // Verificacao de Disponibilidade
             if(status){
+                let sensorNum = 0;
+                if(sensor == "D1MINI_PRO")
+                    sensorNum = 1
+                else if(sensor == "NODEMCU")
+                    sensorNum = 2;
+                else if(sensor == "D1_MINI")
+                    sensorNum = 3
+
+                let vlBaseLumAtual = messageJSON.baseLightValueTurnedOn;
+                let vlBaseDistAtual = messageJSON.baseDistance;
+                ultimasLeiturasValores[sensorNum-1] = {sensor:sensorNum,vlBaseLumAtual:vlBaseLumAtual,vlBaseDistAtual:vlBaseDistAtual},
+                broadcast(JSON.stringify({ type: 'attVlAtual', sensorNum, vlBaseLumAtual, vlBaseDistAtual}));
                 await db.salvarAlerta(sensor,0,distValue,luzValue);
             }
 
@@ -155,12 +178,9 @@ function connectToBroker(){
                     idTipoAlerta = 1;
                 }
 
-                // arrumar bug
-                if(distValue < 1000){
-                    await db.salvarAlerta(sensor,idTipoAlerta,distValue,luzValue)
-                    broadcast(JSON.stringify({ type: 'alerta', sensor, distValue, movimentoDetectado, luzValue, luzDetectada }));
-                }
-
+                await db.salvarAlerta(sensor,idTipoAlerta,distValue,luzValue)
+                broadcast(JSON.stringify({ type: 'alerta', sensor, distValue, movimentoDetectado, luzValue, luzDetectada }));
+                
 
             }
         }
